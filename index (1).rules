@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // غيّر هذا البريد إلى بريد المدير الذي أنشأته في Firebase Authentication
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email in ['admin@yourdomain.com'];
+    }
+
+    // السيارات وسيارات الزفاف: القراءة للجميع، والتعديل للمدير فقط
+    match /cars/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /wedding/{id} { allow read: if true; allow write: if isAdmin(); }
+
+    // الحجوزات: أي عميل يقدر ينشئ حجزًا جديدًا فقط، والقراءة والتعديل والحذف للمدير فقط
+    match /bookings/{ref} {
+      allow create: if request.resource.data.ref == ref
+                    && request.resource.data.status == 'Pending'
+                    && request.resource.data.name is string  && request.resource.data.name.size()  <= 100
+                    && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+                    && (!('notes' in request.resource.data) || request.resource.data.notes.size() <= 500);
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
