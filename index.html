@@ -771,13 +771,26 @@ const imgsFor = (dir, n) => {
   const cars = dir === 'cars', list = (cars ? CAR_PHOTOS : WEDDING_PHOTOS)[n] || [], folder = cars ? CARS_FOLDER : WEDDING_FOLDER, pre = cars ? 'car' : 'wedding';
   return [0, 1, 2].map(i => photoPath(folder, String(list[i] || '').trim()) || `${folder}${pre}-${n}-${i + 1}.jpg`);
 };
+
+
+
 const mk = (id, ar, en, model, color, colorEn, pax, bags, imgs) => ({ id, ar, en, model, color, colorEn, pax, bags, imgs: imgs || imgsFor('cars', id) });   // imgs اختياري: ['مسار1','مسار2','مسار3']
 const DEFAULT_CARS = [   // (id, الاسم, Name, الموديل, اللون, Color, الركاب, الحقائب)
-  mk(1, 'تويوتا هاي اس 14 راكب', 'Toyota Hiace 14 Passenger', '', '', '', 14, 10),
-  mk(2, 'ليموزين', 'Limousine', '', '', '', 4, 3),
-  mk(3, '7 راكب', '7 Passenger', '', '', '', 7, 4)
-
+  mk(1,'ميتسوبيشي إكسباندر', 'Mitsubishi Xpander', '2026', 'أبيض', 'White', 7, 4),
+  mk(2,'تويوتا راش', 'Toyota Rush', '2022', 'فضي', 'Silver', 7, 4),
+  mk(3,'فيات تيبو', 'Fiat Tipo', '2023', 'أبيض', 'White', 4, 3),
+  mk(4,'فيات تيبو', 'Fiat Tipo', '2022', 'فضي', 'Silver', 4, 3),
+  mk(5,'هيونداي إلنترا', 'Hyundai Elantra', '2025', 'أحمر', 'Red', 4, 3),
+  mk(6,'هيونداي توسان (شكل جديد)', 'Hyundai Tucson (new shape)', '2024', 'أبيض', 'White', 4, 4),
+  mk(7,'تويوتا كورولا', 'Toyota Corolla', '2022', 'أحمر', 'Red', 4, 3),
+  mk(8,'كيا سبورتاج', 'Kia Sportage', '2022', 'أبيض', 'White', 4, 4),
+  mk(9,'كيا سيراتو', 'Kia Cerato', '2022', 'أبيض', 'White', 4, 3),
+  mk(10,'مرسيدس A200', 'Mercedes A200', '2024', 'أبيض', 'White', 4, 3),
+  mk(11,'تويوتا هاي اس (شكل جديد)', 'Toyota Hiace (new shape)', '2025', 'أبيض', 'White', 13, 10),
+  mk(12,'تويوتا هاي اس', 'Toyota Hiace', '2022', 'أبيض', 'White', 13, 10)
 ];
+
+  
 const DEFAULT_WEDDING = Array.from({ length: 4 }, (_, i) => ({ id: i + 1, ar: 'سيارة زفاف ' + (i + 1), en: 'Wedding car ' + (i + 1), model: '', imgs: imgsFor('wedding', i + 1) }));
 const clone = x => JSON.parse(JSON.stringify(x));
 let CARS, WEDDING;
@@ -909,9 +922,19 @@ function renderBookingSelects() {
   fillSelect($('b_svc'), SERVICES);
   fillSelect($('b_from'), PLACES, T[lang].ph);
   fillSelect($('b_to'), PLACES, T[lang].ph);
-  $('b_car').innerHTML = `<option value="">${T[lang].b_pick}</option>` + CARS.map(c => ` <option value="${c.id}">${esc([lang === 'ar' ? c.ar : c.en, lang === 'ar' ? c.color : c.colorEn, c.model].filter(Boolean).join(' – '))}</option>` ).join("");
+  // Booking dropdown only: three choices, while keeping the full fleet elsewhere.
+  const bookingCars = [
+    { id: 10, ar: 'ليموزين', en: 'Limousine', pax: 4 },
+    { id: 1, ar: '7 راكب', en: '7 passengers', pax: 7 },
+    { id: 11, ar: 'تويوتا هاي إيس 14 راكب', en: 'Toyota Hiace 14 passengers', pax: 14 }
+  ];
+  // Keep the Hiace booking capacity consistent with its displayed 14 passengers.
+  const hiace = CARS.find(c => c.id === 11);
+  if (hiace) hiace.pax = 14;
+  $('b_car').innerHTML = `<option value="">${T[lang].b_pick}</option>` + bookingCars.map(c => `<option value="${c.id}">${lang === 'ar' ? c.ar : c.en}</option>`).join('');
   if (keep) $('b_car').value = keep;
 }
+
 const val = id => $(id).value;
 function readBooking() {
   return { trip: document.querySelector('[name=trip]:checked').value, svc: val('b_svc'), from: val('b_from'), to: val('b_to'),
@@ -924,6 +947,7 @@ function payUI() {
   const f = T[lang]['payd_' + m];
   $('b_paydetail').textContent = m ? f(PAY[m]) : '';
 }
+
 let lastMap = '';
 function updateBooking() {
   const b = readBooking(), t = T[lang];
@@ -974,11 +998,13 @@ function ticketText(b, l) {
   const trip = b.trip || b.service ||'-';
   const cost = b.price || b.cost  || '-';
   const paid = b.paid || b.payment  || '-';
+  const ref= b.ref|| '-';
 
   return` ✈️ https://www.facebook.com/alkhairtravel102
 
 ━━━━━━━━━━━━━
 *بيانات الحجز – شركة الخير ترافل*
+*الرقم المرجعي: ${ref}*
 ━━━━━━━━━━━━━━━
 
 *حجز يوم*: ${date}
