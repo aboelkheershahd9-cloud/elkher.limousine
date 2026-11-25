@@ -773,18 +773,10 @@ const imgsFor = (dir, n) => {
 };
 const mk = (id, ar, en, model, color, colorEn, pax, bags, imgs) => ({ id, ar, en, model, color, colorEn, pax, bags, imgs: imgs || imgsFor('cars', id) });   // imgs اختياري: ['مسار1','مسار2','مسار3']
 const DEFAULT_CARS = [   // (id, الاسم, Name, الموديل, اللون, Color, الركاب, الحقائب)
-  mk(1,'ميتسوبيشي إكسباندر','Mitsubishi Xpander','2026','أبيض','White',7,4),
-  mk(2,'تويوتا راش','Toyota Rush','2022','فضي','Silver',7,4),
-  mk(3,'فيات تيبو','Fiat Tipo','2023','أبيض','White',4,3),
-  mk(4,'فيات تيبو','Fiat Tipo','2022','فضي','Silver',4,3),
-  mk(5,'هيونداي إلنترا','Hyundai Elantra','2025','أحمر','Red',4,3),
-  mk(6,'هيونداي توسان (شكل جديد)','Hyundai Tucson (new shape)','2024','أبيض','White',4,4),
-  mk(7,'تويوتا كورولا','Toyota Corolla','2022','أحمر','Red',4,3),
-  mk(8,'كيا سبورتاج','Kia Sportage','2022','أبيض','White',4,4),
-  mk(9,'كيا سيراتو','Kia Cerato','2022','أبيض','White',4,3),
-  mk(10,'مرسيدس A200','Mercedes A200','2024','أبيض','White',4,3),
-  mk(11,'تويوتا هاي اس (شكل جديد)','Toyota Hiace (new shape)','2025','أبيض','White',13,10),
-  mk(12,'تويوتا هاي اس','Toyota Hiace','2022','أبيض','White',13,10)
+  mk(1, 'تويوتا هاي اس 14 راكب', 'Toyota Hiace 14 Passenger', '', '', '', 14, 10),
+  mk(2, 'ليموزين', 'Limousine', '', '', '', 4, 3),
+  mk(3, '7 راكب', '7 Passenger', '', '', '', 7, 4)
+
 ];
 const DEFAULT_WEDDING = Array.from({ length: 4 }, (_, i) => ({ id: i + 1, ar: 'سيارة زفاف ' + (i + 1), en: 'Wedding car ' + (i + 1), model: '', imgs: imgsFor('wedding', i + 1) }));
 const clone = x => JSON.parse(JSON.stringify(x));
@@ -917,7 +909,7 @@ function renderBookingSelects() {
   fillSelect($('b_svc'), SERVICES);
   fillSelect($('b_from'), PLACES, T[lang].ph);
   fillSelect($('b_to'), PLACES, T[lang].ph);
-  $('b_car').innerHTML = `<option value="">${T[lang].b_pick}</option>` + CARS.map(c => `<option value="${c.id}">${esc([lang === 'ar' ? c.ar : c.en, lang === 'ar' ? c.color : c.colorEn, c.model].filter(Boolean).join(' – '))} (${c.pax})</option>`).join('');
+  $('b_car').innerHTML = `<option value="">${T[lang].b_pick}</option>` + CARS.map(c => ` <option value="${c.id}">${esc([lang === 'ar' ? c.ar : c.en, lang === 'ar' ? c.color : c.colorEn, c.model].filter(Boolean).join(' – '))}</option>` ).join("");
   if (keep) $('b_car').value = keep;
 }
 const val = id => $(id).value;
@@ -968,53 +960,67 @@ const flightMsg = b => `مرحبًا، هذه تذكرة رحلتي الجوية
 const tripLabel = (k, t) => k === 'round' ? t.b_round : k === 'return' ? t.b_return : t.b_oneway;
 
 /* --- ticket text (WhatsApp) --- */
+
 function ticketText(b, l) {
+  b = b || {};
+
   const date = b.date || '-';
   const time = b.time || '-';
+  const name = b.name || '-';
+  const phone = b.phone || '-';
+  const from = b.from || '-';
+  const to = b.to || '-';
+  const car = b.car || '-';
+  const trip = b.trip || b.service ||'-';
+  const cost = b.price || b.cost  || '-';
+  const paid = b.paid || b.payment  || '-';
 
-  return `✈️ https://www.facebook.com/alkhairtravel102
+  return` ✈️ https://www.facebook.com/alkhairtravel102
+
 ━━━━━━━━━━━━━
- *بيانات الحجز* – *شركة الخير ترافل*
+*بيانات الحجز – شركة الخير ترافل*
 ━━━━━━━━━━━━━━━
-*حجز يوم*:
-*التاريخ*:
-*الساعة*:
+
+*حجز يوم*: ${date}
+*التاريخ*: ${date}
+*الساعة*: ${time}
 
 *بيانات العميل*
 
-*بإسم*:
-*تليفون*:
+*بإسم*: ${name}
+*تليفون*: ${phone}
 
-*خط سير الاوردر*
-*من*:
-*إلي*:
-*السيارة*:
-*الرحله*:
+*خط سير الأوردر*
+*من*: ${from}
+*إلى*: ${to}
+*السيارة*: ${car}
+*الرحلة*: ${trip}
 
-*التكلفة*:
-*مدفوع*:
+*التكلفة*: ${cost}
+*مدفوع*: ${paid}
 
- *للتحويل*
+*للتحويل*
 01025436666
-*انستا*
+*إنستا*
 *فودافون كاش*
 
 ⚠️*التعامل المالي مع الشركة فقط*
-📵 *الشركه غير مسؤولة عن أي تعامل
-مع كابتن بدون علم الشركه*.
+📵 *الشركة غير مسؤولة عن أي تعامل
+مع كابتن بدون علم الشركة*.
 
-  *شركة الخير ترافل*✈️
+*شركة الخير ترافل* ✈️
 
 *العناوين ومقرها*
-*دمياط* / باب الحرس أول شارع النجدة برج الفائز 
-*القاهرة*/ شيراتون المطار 
+*دمياط* / باب الحرس أول شارع النجدة برج الفائز
+*القاهرة* / شيراتون المطار
 
 *ويب سايت الشركة*
 https://aboelkheershahd9-cloud.github.io/elkher.limousine/
 
 https://maps.app.goo.gl/xZdnhyp6wu2Nwfzx5?g_st=awb
-*المتابعه مع*
-ا. *وليد محمود* 
+
+*المتابعة مع*
+أ. *وليد محمود*
 
 *01025436666*
 ━━━━━━━━━━━━━━━━`;
@@ -1044,7 +1050,7 @@ $('b_submit').addEventListener('click', () => {
   
   if (b.trip === 'round' && new Date(`${b.rdate}T${b.rtime}`) <= new Date(`${b.date}T${b.time}`)) return err(t.b_err_ret);
   err('');
-  const rec = Object.assign({}, b, { ref: 'KH-' + Date.now().toString(36).toUpperCase().slice(-6), status: 'Pending', created: new Date().toISOString(),
+  const rec = Object.assign({}, b, { ref: '00' + Math.floor(100+Math.random()*900), status: 'Pending', created: new Date().toISOString(),
     carAr: car.ar, carEn: car.en, lang });
   $('b_submit').disabled = true;
   saveBooking(rec).then(ok => { $('b_submit').disabled = false; showTicket(rec, ok); });
