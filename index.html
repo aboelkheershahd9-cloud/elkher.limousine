@@ -550,6 +550,22 @@ nav a{white-space:nowrap}
    <fieldset class="bcard"><legend data-i18n="b_s3">3. الموعد والسيارة</legend>
     <div class="fg">
      <div><label for="b_date" data-i18n="b_date">تاريخ التحرك</label><input type="date" id="b_date"></div>
+     
+<!-- ضعي كود اليوم هنا -->
+<div>
+  <label for="b_weekday">اليوم</label>
+  <select id="b_weekday">
+    <option value="">اختاري اليوم</option>
+    <option value="السبت">السبت</option>
+    <option value="الأحد">الأحد</option>
+    <option value="الإثنين">الإثنين</option>
+    <option value="الثلاثاء">الثلاثاء</option>
+    <option value="الأربعاء">الأربعاء</option>
+    <option value="الخميس">الخميس</option>
+    <option value="الجمعة">الجمعة</option>
+  </select>
+</div>
+
      <div><label for="b_time" data-i18n="b_time">موعد التحرك</label><input type="time" id="b_time"></div>
      <div class="ret" hidden><label for="b_rdate" data-i18n="b_rdate">تاريخ العودة</label><input type="date" id="b_rdate"></div>
      <div class="ret" hidden><label for="b_rtime" data-i18n="b_rtime">موعد العودة</label><input type="time" id="b_rtime"></div>
@@ -938,7 +954,8 @@ function renderBookingSelects() {
 const val = id => $(id).value;
 function readBooking() {
   return { trip: document.querySelector('[name=trip]:checked').value, svc: val('b_svc'), from: val('b_from'), to: val('b_to'),
-    fromAddr: val('b_fromAddr').trim(), toAddr: val('b_toAddr').trim(), date: val('b_date'), time: val('b_time'), rdate: val('b_rdate'), rtime: val('b_rtime'),
+    fromAddr: val('b_fromAddr').trim(), toAddr: val('b_toAddr').trim(),
+     weekday: val('b_weekday'),date:val('b_date'), time: val('b_time'), rdate: val('b_rdate'), rtime: val('b_rtime'),
     pax: +val('b_pax') || 1, carId: val('b_car'), name: val('b_name').trim(), phone: val('b_phone').trim(), email: val('b_email').trim(),
     bags: +val('b_bags') || 0, wait: +val('b_wait') || 0, flight: val('b_flight').trim(), notes: val('b_notes').trim(), pay: (document.querySelector('[name=pay]:checked') || {}).value || '' };
 }
@@ -989,12 +1006,13 @@ function ticketText(b, l) {
   b = b || {};
 
   const date = b.date || '-';
+  const weekday = b.weekday || '-';
   const time = b.time || '-';
   const name = b.name || '-';
   const phone = b.phone || '-';
   const from = b.from || '-';
   const to = b.to || '-';
-  const car = b.car || '-';
+  const car = 1=== 'ar' ? (b.carAr || b.car || '-') :(b.carEn || b.car||'-');
   const trip = b.trip || b.service ||'-';
   const cost = b.price || b.cost  || '-';
   const paid = b.paid || b.payment  || '-';
@@ -1007,7 +1025,7 @@ function ticketText(b, l) {
 *الرقم المرجعي: ${ref}*
 ━━━━━━━━━━━━━━━
 
-*حجز يوم*: ${date}
+*حجز يوم*: ${weekday}
 *التاريخ*: ${date}
 *الساعة*: ${time}
 
@@ -1057,7 +1075,12 @@ function showTicket(b, ok = true) {
   $('b_done').innerHTML = `<div class="ticket"><h3>✅ ${t.tk_title}</h3><p>${t.tk_sent}</p>${ok ? '' : `<p class="err">${t.tk_nosave}</p>`}
     <p>${t.tk_ref}: <span class="ref">${esc(b.ref)}</span></p><p>${t.tk_status}: <span class="st">${t.st_Pending}</span></p>
     <dl>${row(t.tk_svc, svcName(b.svc) + ' (' + tripLabel(b.trip, t) + ')')}${row(t.tk_from, placeName(b.from) + (b.fromAddr ? ' – ' + b.fromAddr : ''))}
-    ${row(t.tk_to, placeName(b.to) + (b.toAddr ? ' – ' + b.toAddr : ''))}${row(b.trip === 'return' ? t.tk_back : t.tk_when, b.date + ' ' + b.time)}${b.trip === 'round' ? row(t.tk_back, b.rdate + ' ' + b.rtime) + row(t.tk_wait, b.wait ? b.wait + ' ' + t.hours : '') : ''}
+    ${row(t.tk_to, placeName(b.to) + (b.toAddr ? ' – ' + b.toAddr : ''))}
+
+    ${row('اليوم',b.weekday)}
+    ${row(b.trip=== 'return'? t.tk_back : t.tk_when, b.date + ' ' + b.time)}
+
+    ${b.trip === 'round' ? row(t.tk_back, b.rdate + ' ' + b.rtime) + row(t.tk_wait, b.wait ? b.wait + ' ' + t.hours : '') : ''}
     ${row(t.tk_pax, b.pax)}${row(t.tk_bags, b.bags)}${row(t.tk_car, lang === 'ar' ? b.carAr : b.carEn)}${row(t.tk_pay, t['pay_' + b.pay])}
     ${row(t.tk_name, b.name)}${row(t.tk_phone, b.phone)}${row(t.tk_flight, b.flight)}${row(t.tk_notes, b.notes)}</dl>
     <p class="paynote">${t['payd_' + b.pay](PAY[b.pay])}</p>
