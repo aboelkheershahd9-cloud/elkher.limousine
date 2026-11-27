@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>الخير للرحلات | خدمات الليموزين</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
 :root{--red:#c4121a;--red-dark:#9c0d14;--ink:#222;--mute:#555;--bg:#f6f6f7;--card:#fff;--radius:22px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -414,7 +415,12 @@ nav a{white-space:nowrap}
  .heroPhoto{width:100%;height:min(80vw,440px)}
  .heroPhoto .slide.cover img{object-fit:contain}
 }
-
+#fleetList .ccard .cbody a[data-car] {
+  display: none !important;
+}
+#weddingList .ccard .cbody a[data-svc="wedding"] {
+  display: none !important;
+}
 /* slide 2 is a wide banner: keep it whole and sit it low so the left text clears the white curve */
 .heroPhoto .slide:nth-child(2) img{object-position:center}
 .heroPhoto .slide:nth-child(3).cover img{object-position:center 30%}
@@ -554,16 +560,7 @@ nav a{white-space:nowrap}
 <!-- ضعي كود اليوم هنا -->
 <div>
   <label for="b_weekday">اليوم</label>
-  <select id="b_weekday">
-    <option value="">اختاري اليوم</option>
-    <option value="السبت">السبت</option>
-    <option value="الأحد">الأحد</option>
-    <option value="الإثنين">الإثنين</option>
-    <option value="الثلاثاء">الثلاثاء</option>
-    <option value="الأربعاء">الأربعاء</option>
-    <option value="الخميس">الخميس</option>
-    <option value="الجمعة">الجمعة</option>
-  </select>
+  <input type="text" id="b_weekday" readonly placeholder="يظهر تلقائيًا">
 </div>
 
      <div><label for="b_time" data-i18n="b_time">موعد التحرك</label><input type="time" id="b_time"></div>
@@ -836,6 +833,7 @@ function slideCard(it, kind) {
     ? `<p class="cmeta">${esc([it.model, lang === 'ar' ? it.color : it.colorEn].filter(Boolean).join(' · '))}</p><p class="cmeta">${it.pax} ${t.pax} · ${it.bags} ${t.bags}</p>`
     : `<p class="cmeta">${esc(it.model)}</p>`;
   const btn = kind === 'car' ? `<a class="btn sm" href="#booking" data-car="${it.id}">${t.book_now}<i>‹</i></a>` : `<a class="btn sm" href="#booking" data-svc="wedding">${t.book_wed}<i>‹</i></a>`;
+
   return `<article class="ccard"><div class="slides3">${slides}<div class="d3">${dots}</div></div><div class="cbody"><h3>${esc(nm)}</h3>${meta}${btn}</div></article>`;
 }
 function renderFleet() {
@@ -848,7 +846,7 @@ function showSlide(box, n) {
 }
 document.addEventListener('click', e => { const d = e.target.closest('.d3 button'); if (d) showSlide(d.closest('.slides3'), +d.dataset.n); });
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => {
-  document.querySelectorAll('.slides3').forEach(box => {
+  documentfunction .querySelectorAll('.slides3').forEach(box => {
     if (box.matches(':hover')) return;
     const all = [...box.querySelectorAll('.s3')], ok = all.filter(s => s.classList.contains('ok'));
     if (ok.length < 2) return;
@@ -952,6 +950,15 @@ function renderBookingSelects() {
 }
 
 const val = id => $(id).value;
+$('b_date').addEventListener('change', function() {
+  if (!this.value) {
+    $('b_weekday').value = '';
+    return;
+  }
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const d = new Date(this.value + 'T12:00:00');
+  $('b_weekday').value = days[d.getDay()];
+});
 function readBooking() {
   return { trip: document.querySelector('[name=trip]:checked').value, svc: val('b_svc'), from: val('b_from'), to: val('b_to'),
     fromAddr: val('b_fromAddr').trim(), toAddr: val('b_toAddr').trim(),
@@ -1007,13 +1014,27 @@ function ticketText(b, l) {
 
   const date = b.date || '-';
   const weekday = b.weekday || '-';
-  const time = b.time || '-';
+  const time = (() => {
+  if (!b.time || b.time === '-') return '-';
+  const [h, m] = b.time.split(':').map(Number);
+  const period = h >= 12 ? 'مساءً' : 'صباحًا';
+  const hour = h % 12 || 12;
+  return `${hour}${m ? ':' + String(m).padStart(2, '0') : ''} ${period}`;
+})();
   const name = b.name || '-';
   const phone = b.phone || '-';
-  const from = b.from || '-';
-  const to = b.to || '-';
-  const car = 1=== 'ar' ? (b.carAr || b.car || '-') :(b.carEn || b.car||'-');
-  const trip = b.trip || b.service ||'-';
+  const from = placeName(b.from, l) || '-';
+  const to = placeName(b.to, l) || '-';
+  const car = l === 'ar' ? ({
+  '10': 'ليموزين',
+  '1': '7 راكب',
+  '11': 'تويوتا هاي إيس 14 راكب'
+}[String(b.carId)] || b.carAr || '-') : ({
+  '10': 'Limousine',
+  '1': '7 passengers',
+  '11': 'Toyota Hiace 14 passengers'
+}[String(b.carId)] || b.carEn || '-');
+  const trip = tripLabel(b.trip, T[l]);
   const cost = b.price || b.cost  || '-';
   const paid = b.paid || b.payment  || '-';
   const ref= b.ref|| '-';
@@ -1078,10 +1099,15 @@ function showTicket(b, ok = true) {
     ${row(t.tk_to, placeName(b.to) + (b.toAddr ? ' – ' + b.toAddr : ''))}
 
     ${row('اليوم',b.weekday)}
-    ${row(b.trip=== 'return'? t.tk_back : t.tk_when, b.date + ' ' + b.time)}
+
+    ${row(b.trip === 'return' ? t.tk_back : t.tk_when, b.date + ' ' + (b.time ? (() => { const [h, m] = b.time.split(':').map(Number); return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h >= 12 ? ' PM' : ' AM'); })() : '-'))}
 
     ${b.trip === 'round' ? row(t.tk_back, b.rdate + ' ' + b.rtime) + row(t.tk_wait, b.wait ? b.wait + ' ' + t.hours : '') : ''}
-    ${row(t.tk_pax, b.pax)}${row(t.tk_bags, b.bags)}${row(t.tk_car, lang === 'ar' ? b.carAr : b.carEn)}${row(t.tk_pay, t['pay_' + b.pay])}
+    ${row(t.tk_pax, b.pax)}${row(t.tk_bags, b.bags)}
+
+  ${row(t.tk_car, b.carId == 1 ? (lang === 'ar' ? '7 راكب' : '7 passengers') : b.carId == 11 ? (lang === 'ar' ? 'تويوتا هاي إيس 14 راكب' : 'Toyota Hiace 14 passengers') : (lang === 'ar' ? 'ليموزين' : 'Limousine'))}
+    
+    ${row(t.tk_pay, t['pay_' + b.pay])}
     ${row(t.tk_name, b.name)}${row(t.tk_phone, b.phone)}${row(t.tk_flight, b.flight)}${row(t.tk_notes, b.notes)}</dl>
     <p class="paynote">${t['payd_' + b.pay](PAY[b.pay])}</p>
     <div class="row-btns"><a class="btn" target="_blank" rel="noopener" href="${wa(ticketText(b, 'ar'))}">${t.tk_wa_office}<i>‹</i></a>
